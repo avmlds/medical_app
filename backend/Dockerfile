@@ -1,7 +1,7 @@
 FROM python:3.9-buster
-RUN pip3 install cython
+RUN pip3 install cython uvicorn
 RUN mkdir /app
 WORKDIR /app/
 COPY ./ /app/
 RUN pip install -r requirements.txt
-CMD ["python3.9", "main.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0"]

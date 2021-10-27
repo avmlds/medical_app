@@ -22,7 +22,3 @@ app = FastAPI(middleware=middleware)
 app.include_router(doctors_router, prefix="/doctors", tags=["doctors"])
 app.include_router(patient_router, prefix="/patients", tags=["patients"])
 app.include_router(diagnostics_router, prefix="/diagnostics", tags=["diagnostics"])
-
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import insert, delete
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse, Response
 
@@ -19,7 +20,7 @@ async def get_doctors(
         {
             "id": doctor.id,
             "name": doctor.name,
-            "expired_in_months": doctor.expired_in_months,
+            "expires_in_months": doctor.expires_in_months,
         }
         for doctor in doctors
     ]
@@ -35,16 +36,24 @@ async def get_doctor(doctor_id: int, session: Session = Depends(get_session)):
         {
             "id": doctor.id,
             "name": doctor.name,
-            "expired_in_months": doctor.expired_in_months,
+            "expires_in_months": doctor.expires_in_months,
         }
     )
 
 
-@doctors_router.put("/{doctor_id}")
+@doctors_router.put("/")
 async def add_doctor(doctor_data: NewDoctor, session: Session = Depends(get_session)):
-    stmt = insert(Doctors).values(**doctor_data.dict())
-    session.execute(stmt)
-    return Response(status_code=200)
+    stmt = (
+        insert(Doctors)
+        .values(**doctor_data.dict())
+        .on_conflict_do_update(
+            constraint="doctors_name_key", set_={"name": doctor_data.name}
+        )
+        .returning(Doctors.id)
+    )
+    result = session.execute(stmt)
+    data = result.first()["id"]
+    return JSONResponse(content={"id": data}, status_code=200)
 
 
 @doctors_router.delete("/{doctor_id}")

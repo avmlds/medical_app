@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import insert, delete
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse, Response
 
@@ -19,7 +20,7 @@ async def get_diagnostics(
         {
             "id": diagnostic.id,
             "name": diagnostic.name,
-            "expired_in_months": diagnostic.expired_in_months,
+            "expires_in_months": diagnostic.expires_in_months,
         }
         for diagnostic in diagnostics
     ]
@@ -37,7 +38,7 @@ async def get_diagnostics(diagnostic_id: int, session: Session = Depends(get_ses
         {
             "id": diagnostic.id,
             "name": diagnostic.name,
-            "expired_in_months": diagnostic.expired_in_months,
+            "expires_in_months": diagnostic.expires_in_months,
         }
     )
 
@@ -46,9 +47,16 @@ async def get_diagnostics(diagnostic_id: int, session: Session = Depends(get_ses
 async def add_diagnostics(
     diagnostic_data: NewDiagnostic, session: Session = Depends(get_session)
 ):
-    stmt = insert(Diagnostics).values(**diagnostic_data.dict())
-    session.execute(stmt)
-    return Response(status_code=200)
+    stmt = (
+        insert(Diagnostics)
+        .values(**diagnostic_data.dict())
+        .on_conflict_do_update(
+            constraint="diagnostics_name_key", set_={"name": diagnostic_data.name}
+        )
+        .returning(Diagnostics.id)
+    )
+    result = session.execute(stmt).first()
+    return JSONResponse(content={"id": result["id"]}, status_code=200)
 
 
 @diagnostics_router.delete("/{diagnostic_id}")

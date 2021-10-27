@@ -1,8 +1,8 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import delete
-from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
 from starlette.responses import Response, JSONResponse
 
@@ -89,9 +89,11 @@ async def get_patient(patient_id: int, session: Session = Depends(get_session)):
 async def add_patient(
     patient_data: NewPatient, session: Session = Depends(get_session)
 ):
-    stmt = insert(Patients).values(**patient_data.dict())
-    session.execute(stmt)
-    return Response(status_code=200)
+    stmt = insert(Patients).values(**patient_data.dict()).on_conflict_do_update(
+            constraint="patient_uc", set_=patient_data.dict()
+        ).returning(Patients.id)
+    result = session.execute(stmt).first()
+    return JSONResponse(content={"id": result["id"]}, status_code=200)
 
 
 @patient_router.delete("/{patient_id}")
@@ -104,7 +106,7 @@ async def delete_patient(patient_id: int, session: Session = Depends(get_session
 @patient_router.get("/{patient_id}/diagnostics")
 async def get_patient_diagnostics(
     patient_id: int,
-    expired_in: Optional[int] = None,
+    expires_in: Optional[int] = None,
     session: Session = Depends(get_session),
 ):
     results = (
@@ -114,35 +116,32 @@ async def get_patient_diagnostics(
         .filter(Patients.id == patient_id)
         .all()
     )
-    if results is None or len(results[0]) == 0:
+    if results is None or len(results) == 0:
         raise HTTPException(status_code=404, detail="Item not found")
     patient = results[0][0]
-    data = [
-        {
-            "id": patient.id,
-            "first_name": patient.first_name,
-            "middle_name": patient.middle_name,
-            "last_name": patient.last_name,
-            "birth_date": patient.birth_date.isoformat(),
-            "to_committee": patient.to_committee,
-            "to_internat": patient.to_internat,
-            "diagnostic": [
-                {
-                    "diagnostic": result[1].name,
-                    "expired_id": result[1].expired_in_months,
-                }
-                for result in results
-            ],
-        }
-        for patient_result in results
-    ]
+    data = {
+        "id": patient.id,
+        "first_name": patient.first_name,
+        "middle_name": patient.middle_name,
+        "last_name": patient.last_name,
+        "birth_date": patient.birth_date.isoformat(),
+        "to_committee": patient.to_committee,
+        "to_internat": patient.to_internat,
+        "diagnostic": [
+            {
+                "diagnostic": result[1].name,
+                "expires_id": result[1].expires_in_months,
+            }
+            for result in results
+        ],
+    }
     return JSONResponse(data)
 
 
 @patient_router.get("/{patient_id}/doctors")
 async def get_patient_doctors(
     patient_id: int,
-    expired_in: Optional[int] = None,
+    expires_in: Optional[int] = None,
     session: Session = Depends(get_session),
 ):
     results = (
@@ -164,7 +163,7 @@ async def get_patient_doctors(
         "to_committee": patient.to_committee,
         "to_internat": patient.to_internat,
         "doctors": [
-            {"doctor": result[1].name, "expired_id": result[1].expired_in_months}
+            {"doctor": result[1].name, "expires_in": result[1].expires_in_months}
             for result in results
         ],
     }
