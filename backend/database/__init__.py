@@ -246,11 +246,11 @@ class WareHouseItems(Base):
     med_items_rel = relationship("MedicalItems")
 
 
-class WarehouseTransitions(Base):
+class WarehousesTransitions(Base):
     """Class that describes transitions
     between warehouses"""
 
-    __tablename__ = "medical_warehouse"
+    __tablename__ = "warehouses_transitions"
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     current_warehouse = Column(Integer, ForeignKey("warehouses.id"))
