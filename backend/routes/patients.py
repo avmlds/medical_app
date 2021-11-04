@@ -10,8 +10,8 @@ from lib.patient_models import NewPatient, LinkDiagnostics, LinkDoctors
 from utils.crud import get_session
 from utils.db_init import (
     Patients,
-    PatientDoctors,
-    PatientDiagnostics,
+    PatientsDoctors,
+    PatientsDiagnostics,
     Diagnostics,
     Doctors,
 )
@@ -43,16 +43,16 @@ async def get_patients(
 async def get_patient(patient_id: int, session: Session = Depends(get_session)):
     patient = session.query(Patients).filter(Patients.id == patient_id).first()
     doctors = (
-        session.query(PatientDoctors.last_at, Doctors.name)
-        .join(Doctors, PatientDoctors.doctor_id == Doctors.id)
-        .order_by(PatientDoctors.last_at.desc())
-        .filter(PatientDoctors.patient_id == patient_id)
+        session.query(PatientsDoctors.last_at, Doctors.name)
+        .join(Doctors, PatientsDoctors.doctor_id == Doctors.id)
+        .order_by(PatientsDoctors.last_at.desc())
+        .filter(PatientsDoctors.patient_id == patient_id)
     ).all()
     diagnostics = (
-        session.query(Diagnostics.name, PatientDiagnostics.last_at)
-        .join(Diagnostics, PatientDiagnostics.diagnostic_id == Diagnostics.id)
-        .order_by(PatientDiagnostics.last_at.desc())
-        .filter(PatientDiagnostics.patient_id == patient_id)
+        session.query(Diagnostics.name, PatientsDiagnostics.last_at)
+        .join(Diagnostics, PatientsDiagnostics.diagnostic_id == Diagnostics.id)
+        .order_by(PatientsDiagnostics.last_at.desc())
+        .filter(PatientsDiagnostics.patient_id == patient_id)
     ).all()
 
     patient_doctors = []
@@ -111,8 +111,8 @@ async def get_patient_diagnostics(
 ):
     results = (
         session.query(Patients, Diagnostics)
-        .join(PatientDiagnostics, Patients.id == PatientDiagnostics.patient_id)
-        .join(Diagnostics, PatientDiagnostics.diagnostic_id == Diagnostics.id)
+        .join(PatientsDiagnostics, Patients.id == PatientsDiagnostics.patient_id)
+        .join(Diagnostics, PatientsDiagnostics.diagnostic_id == Diagnostics.id)
         .filter(Patients.id == patient_id)
         .all()
     )
@@ -130,7 +130,7 @@ async def get_patient_diagnostics(
         "diagnostic": [
             {
                 "diagnostic": result[1].name,
-                "expires_id": result[1].expires_in_months,
+                "expires_id": result[1].expires_in_days,
             }
             for result in results
         ],
@@ -146,8 +146,8 @@ async def get_patient_doctors(
 ):
     results = (
         session.query(Patients, Doctors)
-        .join(PatientDoctors, Patients.id == PatientDoctors.patient_id)
-        .join(Doctors, PatientDoctors.doctor_id == Doctors.id)
+        .join(PatientsDoctors, Patients.id == PatientsDoctors.patient_id)
+        .join(Doctors, PatientsDoctors.doctor_id == Doctors.id)
         .filter(Patients.id == patient_id)
         .all()
     )
@@ -163,7 +163,7 @@ async def get_patient_doctors(
         "to_committee": patient.to_committee,
         "to_internat": patient.to_internat,
         "doctors": [
-            {"doctor": result[1].name, "expires_in": result[1].expires_in_months}
+            {"doctor": result[1].name, "expires_in": result[1].expires_in_days}
             for result in results
         ],
     }
@@ -177,7 +177,7 @@ async def link_patient_diagnostics(
     data: LinkDiagnostics,
     session: Session = Depends(get_session),
 ):
-    stmt = insert(PatientDiagnostics).values(
+    stmt = insert(PatientsDiagnostics).values(
         patient_id=patient_id, diagnostic_id=diagnostic_id, last_at=data.last_at
     )
     session.execute(stmt)
@@ -191,7 +191,7 @@ async def link_patient_doctors(
     data: LinkDoctors,
     session: Session = Depends(get_session),
 ):
-    stmt = insert(PatientDoctors).values(
+    stmt = insert(PatientsDoctors).values(
         patient_id=patient_id, doctor_id=doctor_id, last_at=data.last_at
     )
     session.execute(stmt)
@@ -204,7 +204,7 @@ async def delete_link_patient_diagnostics(
     diagnostic_id: int,
     session: Session = Depends(get_session),
 ):
-    stmt = delete(PatientDiagnostics).where(
+    stmt = delete(PatientsDiagnostics).where(
         patient_id=patient_id, diagnostic_id=diagnostic_id
     )
     session.execute(stmt)
@@ -217,6 +217,6 @@ async def delete_link_patient_doctors(
     doctor_id: int,
     session: Session = Depends(get_session),
 ):
-    stmt = delete(PatientDoctors).where(patient_id=patient_id, doctor_id=doctor_id)
+    stmt = delete(PatientsDoctors).where(patient_id=patient_id, doctor_id=doctor_id)
     session.execute(stmt)
     return Response(status_code=200)

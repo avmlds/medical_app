@@ -20,7 +20,7 @@ async def get_doctors(
         {
             "id": doctor.id,
             "name": doctor.name,
-            "expires_in_months": doctor.expires_in_months,
+            "expires_in_days": doctor.expires_in_days,
         }
         for doctor in doctors
     ]
@@ -36,7 +36,7 @@ async def get_doctor(doctor_id: int, session: Session = Depends(get_session)):
         {
             "id": doctor.id,
             "name": doctor.name,
-            "expires_in_months": doctor.expires_in_months,
+            "expires_in_days": doctor.expires_in_days,
         }
     )
 

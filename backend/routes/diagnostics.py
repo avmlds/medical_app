@@ -20,7 +20,7 @@ async def get_diagnostics(
         {
             "id": diagnostic.id,
             "name": diagnostic.name,
-            "expires_in_months": diagnostic.expires_in_months,
+            "expires_in_days": diagnostic.expires_in_days,
         }
         for diagnostic in diagnostics
     ]
@@ -38,7 +38,7 @@ async def get_diagnostics(diagnostic_id: int, session: Session = Depends(get_ses
         {
             "id": diagnostic.id,
             "name": diagnostic.name,
-            "expires_in_months": diagnostic.expires_in_months,
+            "expires_in_days": diagnostic.expires_in_days,
         }
     )
 
