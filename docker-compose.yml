@@ -1,0 +1,61 @@
+version: "2.2"
+services:
+  medical_db:
+    image: postgres:12
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=medical_postgres_password
+      - POSTGRES_DB=medical
+    expose:
+      - "5432"
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  queue:
+    image: rabbitmq:3
+
+  backend:
+    depends_on:
+      - medical_db
+    links:
+      - medical_db
+    build:
+      context: ./backend
+      dockerfile: backend.dockerfile
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=medical_postgres_password
+      - POSTGRES_SERVER=medical_db
+      - POSTGRES_DB=medical
+    ports:
+      - "127.0.0.1:8989:8000"
+    expose:
+      - "8000"
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:80:80"
+
+  search:
+    image: getmeili/meilisearch:v0.23.1
+    restart: always
+    volumes:
+      - meilidate:/data.ms
+    environment:
+      MEILI_MASTER_KEY: "qwerty"
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_LOG_LEVEL: "WARN"
+    expose:
+      - "7700"
+    ports:
+      - "127.0.0.1:7700:7700"
+
+volumes:
+  app-db-data:
+  meilidate:
+
+networks:
+  medical_network:
