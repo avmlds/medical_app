@@ -49,14 +49,12 @@ class HospitalDepartments(Base):
 
     __tablename__ = "hospital_departments"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    chief_id = Column(Integer, ForeignKey("staff.id"))
     hospital_id = Column(Integer, ForeignKey("hospitals.id"))
     department_type = Column(Integer, ForeignKey("department_types.id"))
     title = Column(String, nullable=False)
 
     hospital_rel = relationship("Hospitals", foreign_keys=[hospital_id])
     dep_type_rel = relationship("DepartmentTypes", foreign_keys=[department_type])
-    staff_rel = relationship("Staff", foreign_keys=[chief_id])
 
 
 class DepartmentOffices(Base):

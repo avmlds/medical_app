@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Float, DATE, Text
+from sqlalchemy import Column, ForeignKey, Integer, String, Float, DATE, Text, Boolean
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -10,7 +10,7 @@ from app.db.base_class import Base
 class Specializations(Base):
     __tablename__ = "specializations"
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    title = Column(String, nullable=False, unique=True)
+    title = Column(String, nullable=False, unique=True, index=True)
 
 
 class Staff(Base):
@@ -19,6 +19,7 @@ class Staff(Base):
 
     specialization_id = Column(Integer, ForeignKey("specializations.id"))
     department_id = Column(Integer, ForeignKey("hospital_departments.id"))
+    is_chief = Column(Boolean, nullable=False, default=False)
 
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
@@ -47,5 +48,5 @@ class Staff(Base):
 
     notes = Column(Text)
 
-    sp_rel = relationship("Specializations")
+    sp_rel = relationship("Specializations", foreign_keys=[specialization_id])
     staff_dep_rel = relationship("HospitalDepartments", foreign_keys=[department_id])

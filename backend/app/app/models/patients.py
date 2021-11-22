@@ -1,8 +1,19 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, UniqueConstraint, DATE, Boolean, Text
+from sqlalchemy import (
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    DateTime,
+    UniqueConstraint,
+    DATE,
+    Boolean,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
+
 # ------------ Patients, medical cards, prescriptions, diagnoses, diseases and procedures
 
 
@@ -89,13 +100,14 @@ class MedicalRecords(Base):
     patient_claims = Column(Text)
     specialists_notes = Column(Text, nullable=False)
 
-    diagnoses = Column(Integer, ForeignKey("diagnoses.id"), nullable=True)
-
     patient_instructions = Column(Text)
 
     created_at = Column(DateTime, nullable=False)
     staff_secret = Column(String, nullable=False)
     hash_sum = Column(String, nullable=False)
+
+    patient_rel = relationship("Patients")
+    staff_rel = relationship("Staff")
 
 
 class PatientAppointments(Base):
