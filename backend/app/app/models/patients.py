@@ -4,10 +4,10 @@ from sqlalchemy import (
     Integer,
     String,
     DateTime,
-    UniqueConstraint,
     DATE,
     Boolean,
     Text,
+    func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
@@ -19,24 +19,18 @@ from app.db.base_class import Base
 
 class Patients(Base):
     __tablename__ = "patients"
-    __table_args__ = (
-        UniqueConstraint(
-            "first_name",
-            "middle_name",
-            "last_name",
-            "birth_date",
-            "medical_insurance",
-        ),
-    )
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     first_name = Column(String, nullable=False)
     middle_name = Column(String, nullable=True)
     last_name = Column(String, nullable=False)
 
-    birth_date = Column(DATE, nullable=False)
-    medical_insurance = Column(String, nullable=False)
+    birth_date = Column(DATE, server_default=func.now())
+    without_documents = Column(Boolean, default=False)
+
+    medical_insurance = Column(String)
     pension_insurance = Column(String)
+
     address = Column(String)
     passport = Column(String)
     phone = Column(String)
@@ -53,7 +47,7 @@ class Diseases(Base):
     title = Column(String, nullable=False)
     source = Column(Integer, nullable=False)
     is_actual = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
 class Diagnoses(Base):
@@ -66,12 +60,12 @@ class Diagnoses(Base):
 
 
 class Procedures(Base):
-    """Table that connects multiple diseases to medical records"""
+    """Table with procedures for patients"""
 
     __tablename__ = "procedures"
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String, nullable=False)
-    created_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
 class ProceduresRecords(Base):
@@ -86,10 +80,12 @@ class ProceduresRecords(Base):
     record_id = Column(Integer, ForeignKey("medical_records.id"))
     procedure_id = Column(Integer, ForeignKey("procedures.id"))
     files = Column(JSONB)
-    created_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
 
 
 class MedicalRecords(Base):
+    """Table with medical records about patients,
+    their manipulations, diagnoses and prescriptions"""
 
     __tablename__ = "medical_records"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -102,7 +98,7 @@ class MedicalRecords(Base):
 
     patient_instructions = Column(Text)
 
-    created_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
     staff_secret = Column(String, nullable=False)
     hash_sum = Column(String, nullable=False)
 
@@ -111,7 +107,7 @@ class MedicalRecords(Base):
 
 
 class PatientAppointments(Base):
-    """Table for storing prescriptions for patients"""
+    """Table for storing appointments with medical staff"""
 
     __tablename__ = "patient_appointments"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -127,8 +123,8 @@ class PatientAppointments(Base):
     started_at = Column(DateTime, nullable=False)
     ended_at = Column(DateTime, nullable=False)
 
-    created_at = Column(DateTime, nullable=False)
-    updated_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, onupdate=func.now())
 
     record_rel = relationship("MedicalRecords")
     staff_rel = relationship("Staff")
