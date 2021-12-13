@@ -24,7 +24,7 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    PROJECT_NAME: str = "hc-systems"
+    PROJECT_NAME: str = "hc-solutions"
 
     POSTGRES_SERVER: str = "medical_db"
     POSTGRES_USER: str = "postgres"
@@ -71,7 +71,7 @@ class Settings(BaseSettings):
         )
 
     EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
-    FIRST_SUPERUSER: EmailStr = "admin@hc-systems.com"
+    FIRST_SUPERUSER: EmailStr = "admin@hc-solutions.com"
     FIRST_SUPERUSER_PASSWORD: str = "change_me_in_production"
     USERS_OPEN_REGISTRATION: bool = False
 
